@@ -133,3 +133,6 @@ chemescribe/reaction_model/output
 
 # Generated test outputs
 example/extracted_figures/
+
+# Pre-downloaded model cache for offline use
+model_cache/

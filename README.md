@@ -53,6 +53,36 @@ is required.
 > from the [HuggingFace mirror](https://huggingface.co/layoutparser/efficientdet)
 > instead, inside `init_pdfparser`.
 
+### Offline / air-gapped usage
+
+Figure extraction needs two model files at runtime (~103 MB total):
+
+| File | Source | Cache location |
+|------|--------|----------------|
+| `publaynet-tf_efficientdet_d1.pth.tar` (~80 MB) | HuggingFace `layoutparser/efficientdet` | `$HF_HOME` |
+| `tf_efficientdet_d1_40-a30f94af.pth` (~27 MB) | effdet release (torch hub) | `$TORCH_HOME` |
+
+To run on a machine with no internet access, pre-download both into one
+portable folder **on a connected machine** using the included script:
+
+```bash
+python prefetch_models.py model_cache    # downloads into ./model_cache
+```
+
+Copy `model_cache/` into the sandbox, then point the caches at it and enable
+offline mode before running:
+
+```bash
+export HF_HOME="$PWD/model_cache/huggingface"
+export TORCH_HOME="$PWD/model_cache/torch"
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+```
+
+With those set, `extract_figures_from_pdf` runs with no network access. (Note:
+the Python dependencies themselves must also be installed offline — e.g. build
+a wheelhouse with `pip download` and `pip install --no-index`.)
+
 ## Usage
 
 ```python
