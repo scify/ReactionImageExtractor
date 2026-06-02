@@ -81,7 +81,7 @@ def convert_to_cv2(image):
     return image
 
 def replace_rgroups_in_figure(figures, results, coref_results, molscribe, batch_size=16):
-    pattern = re.compile('(?P<name>[RXY]\d?)[ ]*=[ ]*(?P<group>\w+)')
+    pattern = re.compile(r'(?P<name>[RXY]\d?)[ ]*=[ ]*(?P<group>\w+)')
     for figure, result, corefs in zip(figures, results, coref_results):
         r_groups = []
         seen_r_groups = set()
@@ -672,7 +672,7 @@ def backout(results, coref_results, molscribe):
                         
                         all_other_prod_mols = []
     
-                        r_group_sub_pattern = re.compile('(?P<name>[RXY]\d?)[ ]*=[ ]*(?P<group>\w+)')
+                        r_group_sub_pattern = re.compile(r'(?P<name>[RXY]\d?)[ ]*=[ ]*(?P<group>\w+)')
 
                         for parsed_labels in coref_results_dict[other_prod]:
                             res = r_group_sub_pattern.search(parsed_labels)

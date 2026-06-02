@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import layoutparser as lp
 import cv2
 
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 import pandas as pd
 
 import pdfminer.high_level

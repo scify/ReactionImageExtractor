@@ -5,10 +5,9 @@ import layoutparser as lp
 import pdf2image
 from PIL import Image
 from huggingface_hub import hf_hub_download, snapshot_download
-from molscribe import MolScribe
-from rxnscribe import RxnScribe, MolDetect
-from chemiener import ChemNER
-from .chemrxnextractor import ChemRxnExtractor
+# Heavy ML dependencies (molscribe, rxnscribe, chemiener, chemrxnextractor) are
+# imported lazily inside the corresponding init_* methods so that figure/table
+# extraction can run without the full model stack installed.
 from .tableextractor import TableExtractor
 from .utils import *
 
@@ -45,6 +44,7 @@ class OpenChemIE:
         Parameters:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
+        from molscribe import MolScribe
         if ckpt_path is None:
             ckpt_path = hf_hub_download("yujieq/MolScribe", "swin_base_char_aux_1m.pth")
         self._molscribe = MolScribe(ckpt_path, device=self.device)
@@ -63,6 +63,7 @@ class OpenChemIE:
         Parameters:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
+        from rxnscribe import RxnScribe
         if ckpt_path is None:
             ckpt_path = hf_hub_download("yujieq/RxnScribe", "pix2seq_reaction_full.ckpt")
         self._rxnscribe = RxnScribe(ckpt_path, device=self.device)
@@ -82,7 +83,18 @@ class OpenChemIE:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
         config_path = "lp://efficientdet/PubLayNet/tf_efficientdet_d1"
-        self._pdfparser = lp.AutoLayoutModel(config_path, model_path=ckpt_path, device=self.device.type)
+        # PyTorch >= 2.6 flipped torch.load's default to weights_only=True, which
+        # rejects the (trusted) PubLayNet effdet checkpoint loaded deep inside
+        # timm/effdet. Restore the legacy behavior only around this load.
+        _orig_torch_load = torch.load
+        def _torch_load_compat(*args, **kwargs):
+            kwargs["weights_only"] = False
+            return _orig_torch_load(*args, **kwargs)
+        torch.load = _torch_load_compat
+        try:
+            self._pdfparser = lp.AutoLayoutModel(config_path, model_path=ckpt_path, device=self.device.type)
+        finally:
+            torch.load = _orig_torch_load
     
 
     @property
@@ -98,6 +110,7 @@ class OpenChemIE:
         Parameters:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
+        from rxnscribe import MolDetect
         if ckpt_path is None:
             ckpt_path = hf_hub_download("Ozymandias314/MolDetectCkpt", "best_hf.ckpt")
         self._moldet = MolDetect(ckpt_path, device=self.device)
@@ -116,6 +129,7 @@ class OpenChemIE:
         Parameters:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
+        from rxnscribe import MolDetect
         if ckpt_path is None:
             ckpt_path = hf_hub_download("Ozymandias314/MolDetectCkpt", "coref_best_hf.ckpt")
         self._coref = MolDetect(ckpt_path, device=self.device, coref=True)
@@ -134,6 +148,7 @@ class OpenChemIE:
         Parameters:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
+        from .chemrxnextractor import ChemRxnExtractor
         if ckpt_path is None:
             ckpt_path = snapshot_download(repo_id="amberwang/chemrxnextractor-training-modules")
         self._chemrxnextractor = ChemRxnExtractor("", None, ckpt_path, self.device.type)
@@ -152,6 +167,7 @@ class OpenChemIE:
         Parameters:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
+        from chemiener import ChemNER
         if ckpt_path is None:
             ckpt_path = hf_hub_download("Ozymandias314/ChemNERckpt", "best.ckpt")
         self._chemner = ChemNER(ckpt_path, device=self.device)

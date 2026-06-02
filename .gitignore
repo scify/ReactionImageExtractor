@@ -130,3 +130,6 @@ dmypy.json
 
 
 chemescribe/reaction_model/output
+
+# Generated test outputs
+example/extracted_figures/
