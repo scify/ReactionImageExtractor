@@ -41,31 +41,17 @@ pip install --editable .
 the [installation instructions](https://github.com/jalan/pdftotext#os-dependencies)
 for your OS (e.g. `sudo apt install poppler-utils` on Debian/Ubuntu).
 
-### Layout-detection model checkpoint (required)
+### Layout-detection model checkpoint
 
-The first run loads the PubLayNet EfficientDet checkpoint via
-`layoutparser`. The model catalog's original Dropbox download link has rotted
-and now returns an HTML page (you would see `invalid load key, '<'`), so the
-checkpoint must be fetched once from the HuggingFace mirror and placed in the
-`layoutparser` cache:
+The PubLayNet EfficientDet checkpoint (~80 MB) is downloaded automatically on
+first use and cached by `huggingface_hub` for subsequent runs — no manual setup
+is required.
 
-```python
-import os, shutil
-from huggingface_hub import hf_hub_download
-
-src = hf_hub_download(
-    "layoutparser/efficientdet",
-    "PubLayNet/tf_efficientdet_d1/publaynet-tf_efficientdet_d1.pth.tar",
-)
-dst = os.path.expanduser(
-    "~/.torch/iopath_cache/s/gxy11xkkiwnpgog/publaynet-tf_efficientdet_d1.pth.tar?dl=1"
-)
-os.makedirs(os.path.dirname(dst), exist_ok=True)
-shutil.copyfile(src, dst)
-print("checkpoint ready ->", dst)
-```
-
-Run this once; subsequent runs reuse the cached file.
+> Note: `layoutparser`'s original model catalog points the checkpoint at a dead
+> Dropbox link that now serves an HTML page (the classic symptom is
+> `invalid load key, '<'`). This fork sidesteps that by fetching the checkpoint
+> from the [HuggingFace mirror](https://huggingface.co/layoutparser/efficientdet)
+> instead, inside `init_pdfparser`.
 
 ## Usage
 

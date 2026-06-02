@@ -83,6 +83,15 @@ class OpenChemIE:
             ckpt_path: path to checkpoint to use, if None then will use default
         """
         config_path = "lp://efficientdet/PubLayNet/tf_efficientdet_d1"
+        if ckpt_path is None:
+            # layoutparser's model catalog points the PubLayNet checkpoint at a
+            # dead Dropbox link that now serves an HTML page. Fetch the same file
+            # from the HuggingFace mirror and pass it directly as model_path,
+            # bypassing the catalog download entirely.
+            ckpt_path = hf_hub_download(
+                "layoutparser/efficientdet",
+                "PubLayNet/tf_efficientdet_d1/publaynet-tf_efficientdet_d1.pth.tar",
+            )
         # PyTorch >= 2.6 flipped torch.load's default to weights_only=True, which
         # rejects the (trusted) PubLayNet effdet checkpoint loaded deep inside
         # timm/effdet. Restore the legacy behavior only around this load.
